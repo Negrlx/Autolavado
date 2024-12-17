@@ -4,84 +4,213 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mail;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
 
 namespace Autolavado
 {
+    using System;
+    using System.Collections.Generic;
 
-    public class Pila
+    public class Node<T>
     {
-        private const int MAX = 4; // Tamaño máximo de la pila
-        private int[] datos;    // Array para almacenar los elementos
-        private int tope;           // Índice del tope de la pila
-        private int cant;           // Cantidad de elementos en la pila
+        public T Dato { get; private set; }
+        public Node<T> NextNode { get; set; }  // Cambio aquí para permitir modificar directamente el siguiente nodo
+
+        public Node(T dato)
+        {
+            Dato = dato;
+            NextNode = null;
+        }
+    }
+
+    public class Lista<T>
+    {
+        public int Cant { get; set; }
+        public Node<T> Head;
+        public Node<T> Last;
+
+        public Lista()
+        {
+            Head = Last = null;
+            Cant = 0;
+        }
+
+        public bool ListaVacia() => Head == null;
+
+        public void IngresarAlInicio(T dato)
+        {
+            var nuevoNodo = new Node<T>(dato);
+            if (ListaVacia())
+            {
+                Head = Last = nuevoNodo;
+            }
+            else
+            {
+                nuevoNodo.NextNode = Head;
+                Head = nuevoNodo;
+            }
+            Cant++;
+        }
+
+        public void IngresarAlFinal(T dato)
+        {
+            var nuevoNodo = new Node<T>(dato);
+            if (ListaVacia())
+            {
+                Head = Last = nuevoNodo;
+            }
+            else
+            {
+                Last.NextNode = nuevoNodo;
+                Last = nuevoNodo;
+            }
+            Cant++;
+        }
+
+        public T RetirarAlInicio()
+        {
+            if (ListaVacia())
+                throw new InvalidOperationException("La lista está vacía.");
+
+            T dato = Head.Dato;
+            Head = Head.NextNode;
+
+            if (Head == null)
+            {
+                Last = null;
+            }
+
+            Cant--;
+            return dato;
+        }
+
+        public T RetirarAlFinal()
+        {
+            if (ListaVacia())
+                throw new InvalidOperationException("La lista está vacía.");
+
+            T dato = Last.Dato;
+
+            if (Head == Last)
+            {
+                Head = Last = null;
+            }
+            else
+            {
+                var current = Head;
+                while (current.NextNode != Last)
+                {
+                    current = current.NextNode;
+                }
+                current.NextNode = null;
+                Last = current;
+            }
+
+            Cant--;
+            return dato;
+        }
+
+        public Node<T> Localizar(T dato)
+        {
+            var current = Head;
+            while (current != null)
+            {
+                if (EqualityComparer<T>.Default.Equals(dato, current.Dato))
+                {
+                    return current;
+                }
+                current = current.NextNode;
+            }
+            return null;
+        }
+
+        public bool Eliminar(T dato)
+        {
+            var current = Head;
+            Node<T> previous = null;
+
+            while (current != null)
+            {
+                if (EqualityComparer<T>.Default.Equals(dato, current.Dato))
+                {
+                    if (previous == null)
+                    {
+                        Head = current.NextNode;
+                    }
+                    else
+                    {
+                        previous.NextNode = current.NextNode;
+                    }
+
+                    if (current == Last)
+                    {
+                        Last = previous;
+                    }
+
+                    Cant--;
+                    return true;
+                }
+
+                previous = current;
+                current = current.NextNode;
+            }
+            return false;
+        }
+
+        public void Mostrar()
+        {
+            var current = Head;
+            while (current != null)
+            {
+                Console.WriteLine(current.Dato);
+                current = current.NextNode;
+            }
+        }
+    }
+
+    public class Pila<T>
+    {
+        private readonly Lista<T> _lista;
 
         public Pila()
         {
-            datos = new int[MAX];
-            tope = -1;
-            cant = 0;
+            _lista = new Lista<T>();
         }
 
-        public int VerTope()
+        public void Push(T elemento) => _lista.IngresarAlInicio(elemento);
+
+        public T Pop() => _lista.RetirarAlInicio();
+
+        public T Peek()
         {
-            if (!PilaVacia())
+            if (_lista.ListaVacia())
+                throw new InvalidOperationException("La pila está vacía.");
+
+            return _lista.Localizar(_lista.RetirarAlInicio()).Dato;
+        }
+
+        public int Count() => _lista.Cant;
+
+        public bool IsEmpty() => _lista.ListaVacia();
+
+        public List<T> ToList()
+        {
+            List<T> result = new List<T>();
+            var currentNode = _lista.Head; // Asumiendo que _lista tiene un nodo primero
+
+            while (currentNode != null)
             {
-                return datos[tope];
+                result.Add(currentNode.Dato);
+                currentNode = currentNode.NextNode; // Suponiendo que la lista es enlazada
             }
-            else
-            {
-                return -1;
-            }
-        }
 
-        public bool PilaLlena()
-        {
-            return cant == MAX;
-        }
-
-        public bool PilaVacia()
-        {
-            return tope == -1;
-        }
-
-        public void Push(int elemento)
-        {
-            if (!PilaLlena())
-            {
-                datos[++tope] = elemento;
-                cant++;
-            }
-        }
-
-        public int Pop()
-        {
-            if (!PilaVacia())
-            {
-                int elemento = datos[tope--];
-                cant--;
-                return elemento;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-
-        public int Cantidad()
-        {
-            return cant;
-        }
-
-        // Limpiar la pila
-        public void Limpiar()
-        {
-            tope = -1;
-            cant = 0;
+            return result;
         }
     }
+
     public class ElementoCola
     {
         public string Vehiculo { get; set; }
@@ -89,9 +218,8 @@ namespace Autolavado
         public string Placa { get; set; }
         public string Membresia { get; set; }
         public string Servicio { get; set; }
-        public Pila PilaOpcional { get; private set; }
+        public Pila<int> PilaOpcional { get; private set; }
 
-        // Constructor para 4 strings
         public ElementoCola(string vehiculo, string modelo, string placa, string membresia, string servicio)
         {
             Vehiculo = vehiculo;
@@ -99,140 +227,114 @@ namespace Autolavado
             Placa = placa;
             Membresia = membresia;
             Servicio = servicio;
-            PilaOpcional = null; // Inicialmente no hay pila
+            PilaOpcional = new Pila<int>();
         }
 
-        // Método para asignar o reemplazar la pila opcional
-        public void AsignarPila(Pila pila)
+        public void AsignarPila(Pila<int> pila)
         {
             PilaOpcional = pila;
         }
+    }
 
-        // Método para imprimir los detalles del objeto
-        public override string ToString()
+    public class InfCliente
+    {
+        public string Nombre { get; set; }
+        public string Cedula { get; set; }
+        public string Destino { get; set; }
+
+        public InfCliente(string nombre, string ci, string mail)
         {
-            string infoPila = PilaOpcional != null ? $"Pila (cantidad): {PilaOpcional.Cantidad()}" : "No hay pila asociada";
-            return $"{Vehiculo}, {Modelo}, {Placa}, {Membresia}, {Servicio} | {infoPila}";
+            Nombre = nombre;
+            Cedula = ci;
+            Destino = mail;
         }
     }
+
     public class Cola
     {
-        int MAX;
-        private ElementoCola[] datos;
-        private int cant;
-        private int inicio;
-        private int fin;
+        private Lista<ElementoCola> _lista = new Lista<ElementoCola>();
 
-        public Cola(int n)
-        {
-            MAX = n;
-            datos = new ElementoCola[MAX];
-            cant = 0;
-            inicio = -1;
-            fin = -1;
-        }
-
-        public bool Vacia()
-        {
-            return cant == 0;
-        }
-
-        public bool Llena()
-        {
-            return cant == MAX;
-        }
-
-        public void Limpiar()
-        {
-            cant = 0;
-            inicio = -1;
-            fin = -1;
-        }
-
-        public int Cantidad()
-        {
-            return cant;
-        }
-
-        public int Inicio()
-        {
-            return inicio;
-        }
-
+        // Método público para insertar un elemento en la cola (FIFO)
         public void Insertar(ElementoCola elemento)
         {
-            if (!Llena())
-            {
-                if (inicio == -1) inicio = 0; // Configurar el inicio si es la primera inserción
-                fin = (fin + 1) % MAX;
-                datos[fin] = elemento;
-                cant++;
-            }
-            
+            _lista.IngresarAlFinal(elemento); // Insertar siempre al final para cumplir FIFO
         }
 
+        // Método público para retirar el primer elemento de la cola (FIFO)
         public ElementoCola Retirar()
         {
-            if (!Vacia())
-            {
-                ElementoCola elemento = datos[inicio];
-                inicio = (inicio + 1) % MAX;
-                cant--;
-                return elemento;
-            }
-            return null;
+            if (EsVacia())
+                throw new InvalidOperationException("La cola está vacía.");
+
+            return _lista.RetirarAlInicio();
         }
 
-        public void Eliminar(int posicion)
+        // Método para verificar si la cola está vacía
+        public bool EsVacia() => _lista.ListaVacia();
+
+        // Método para obtener la cantidad de elementos en la cola
+        public int Cantidad() => _lista.Cant;
+
+        // Método para obtener el primer elemento de la cola sin retirarlo
+        public ElementoCola Inicio()
         {
-            if (!Vacia())
-            {
-                if (posicion >= 0 && posicion < cant)
-                {
-                    int indiceEliminar = (inicio + posicion) % MAX;
+            if (EsVacia())
+                throw new InvalidOperationException("La cola está vacía.");
 
-                    for (int i = indiceEliminar; i != fin; i = (i + 1) % MAX)
-                    {
-                        int siguienteIndice = (i + 1) % MAX;
-                        datos[i] = datos[siguienteIndice];
-                    }
-
-                    datos[fin] = null;
-                    fin = (fin - 1 + MAX) % MAX;
-                    cant--;
-
-                    if (cant == 0)
-                    {
-                        inicio = -1;
-                        fin = -1;
-                    }
-                    else if (inicio == (fin + 1) % MAX)
-                    {
-                        inicio = (inicio + 1) % MAX;
-                    }
-                }
-            }
+            return _lista.Head.Dato;  // Retorna el primer elemento sin retirarlo
         }
 
-
-
-
-        public int BuscarPosicion(string membresia)
+        // Método para buscar la posición de un elemento en la cola por su membresía
+        public int BuscarPosicionMembresia(string membresia)
         {
-            if (!Vacia())
+            var current = _lista.Head;
+            int posicion = 0;
+
+            while (current != null)
             {
-                for (int i = 0; i < cant; i++)
+                if (current.Dato.Membresia == membresia)
                 {
-                    int indice = (inicio + i) % MAX;
-                    if (datos[indice].Membresia == membresia)
-                    {
-                        return i; 
-                    }
+                    return posicion;
                 }
+                current = current.NextNode;
+                posicion++;
             }
-            return -1;
+
+            return -1; // Si no encontramos el elemento, retornamos -1
         }
 
+        // Método para eliminar un elemento de la cola por su membresía
+        public void EliminarElementoPorMembresia(string membresia)
+        {
+            var current = _lista.Head;
+            Node<ElementoCola> previous = null;
+
+            while (current != null)
+            {
+                if (current.Dato.Membresia == membresia)
+                {
+                    if (previous == null)
+                    {
+                        _lista.Head = current.NextNode;
+                    }
+                    else
+                    {
+                        previous.NextNode = current.NextNode;
+                    }
+
+                    if (current == _lista.Last)
+                    {
+                        _lista.Last = previous;
+                    }
+
+                    _lista.Cant--;
+                    return;
+                }
+
+                previous = current;
+                current = current.NextNode;
+            }
+        }
     }
 
     public static class membresia
@@ -299,9 +401,11 @@ namespace Autolavado
             }
         }
 
-        public static void EnviarFactura(string destino, string monto)
+        public static int EnviarFactura(ElementoCola bm, InfCliente dt, List<ElementoCola> listaVehiculos)
         {
-            string numeroFactura = "522424";
+            string numeroFactura = new Random().Next(100000, 1000000).ToString();  // Número de la factura
+            int totalMonto = 0;  // Inicializa el totalMonto como 0
+
             try
             {
                 mail.To.Clear();
@@ -311,37 +415,71 @@ namespace Autolavado
                 // Obtiene la fecha actual
                 string fechaHoy = DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy");
 
+                int itemNumber = 1; // Para numerar los ítems
+
+                // Construye las filas de los servicios
+                string filasServicios = "";
+                foreach (var vehiculo in listaVehiculos)
+                {
+                    // Acumula el monto de cada vehículo
+                    decimal montoVehiculo = 0;
+
+                    // Suma cada monto en PilaOpcional
+                    foreach (var monto in vehiculo.PilaOpcional.ToList())
+                    {
+                        montoVehiculo += monto;
+                    }
+
+                    // Acumula el total general
+                    totalMonto += (int)montoVehiculo;  // Convertimos el montoVehiculo a int y lo sumamos
+
+                    // Construye la fila del servicio con los datos del vehículo
+                    filasServicios += $@"
+            <tr>
+                <td style='padding: 8px; font-size: 14px; text-align: center;'>{itemNumber++}</td>
+                <td style='padding: 8px; font-size: 14px; text-align: left;'>{vehiculo.Vehiculo}</td>
+                <td style='padding: 8px; font-size: 14px; text-align: left;'>{vehiculo.Placa}</td>
+                <td style='padding: 8px; font-size: 14px; text-align: left;'>{vehiculo.Servicio}</td>
+                <td style='padding: 8px; font-size: 14px; text-align: right;'>${montoVehiculo}</td>
+            </tr>";
+                }
+
                 // Cuerpo del correo en formato HTML
-                mail.Body = @"
-            <html>
-                <body style='font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333;'>
-                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; border: 1px solid #ddd;'>
-                        <h2 style='color: #4CAF50;'>¡Gracias por tu pago!</h2>
-                        <p style='font-size: 18px;'>Querido cliente,</p>
-                        <p style='font-size: 16px;'>Nos complace informarte que hemos recibido tu pago de forma exitosa. Aquí están los detalles de tu factura:</p>
-                        <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
-                            <tr>
-                                <td style='padding: 8px; font-size: 14px; font-weight: bold; background-color: #f1f1f1;'>Factura #</td>
-                                <td style='padding: 8px; font-size: 14px; background-color: #f1f1f1;'>" + numeroFactura + @"</td>
-                            </tr>
-                            <tr>
-                                <td style='padding: 8px; font-size: 14px; font-weight: bold; background-color: #f1f1f1;'>Monto</td>
-                                <td style='padding: 8px; font-size: 14px; background-color: #f1f1f1;'>$" + monto + @"</td>
-                            </tr>
-                            <tr>
-                                <td style='padding: 8px; font-size: 14px; font-weight: bold; background-color: #f1f1f1;'>Fecha</td>
-                                <td style='padding: 8px; font-size: 14px; background-color: #f1f1f1;'>" + fechaHoy + @"</td>
-                            </tr>
-                        </table>
-                        <p style='font-size: 16px; margin-top: 20px;'>Estamos muy agradecidos por tu confianza. Si tienes alguna pregunta, no dudes en contactarnos.</p>
-                        <p style='font-size: 16px;'>¡Te deseamos un excelente día!</p>
-                        <p style='font-size: 14px; color: #777; margin-top: 30px;'>Atentamente,<br/> El Equipo de Autoprocure</p>
-                    </div>
-                </body>
-            </html>";
+                mail.Body = $@"
+    <html>
+        <body style='font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333;'>
+            <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; border: 1px solid #ddd;'>
+                <h2 style='color: #4CAF50; text-align: center;'>Factura de Servicio</h2>
+                <p style='font-size: 16px;'><b>Fecha:</b> {fechaHoy}</p>
+                <p style='font-size: 16px;'><b>Factura #:</b> {numeroFactura}</p>
+                <hr style='border: 1px solid #ddd; margin: 20px 0;'>
+                <p style='font-size: 16px;'><b>Cliente:</b> {dt.Nombre} <b>Cédula:</b> {dt.Cedula}</p>
+                <hr style='border: 1px solid #ddd; margin: 20px 0;'>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <thead>
+                        <tr style='background-color: #f1f1f1;'>
+                            <th style='padding: 8px; font-size: 14px; text-align: left;'>Item</th>
+                            <th style='padding: 8px; font-size: 14px; text-align: left;'>Vehículo</th>
+                            <th style='padding: 8px; font-size: 14px; text-align: left;'>Placa</th>
+                            <th style='padding: 8px; font-size: 14px; text-align: left;'>Servicio</th>
+                            <th style='padding: 8px; font-size: 14px; text-align: right;'>Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filasServicios}
+                    </tbody>
+                </table>
+                <hr style='border: 1px solid #ddd; margin: 20px 0;'>
+                <p style='font-size: 16px; text-align: right;'><b>Total:</b> ${totalMonto}</p>
+                <hr style='border: 1px solid #ddd; margin: 20px 0;'>
+                <p style='font-size: 16px;'>Gracias por confiar en nosotros. Si tienes alguna pregunta, no dudes en contactarnos.</p>
+                <p style='font-size: 14px; color: #777; margin-top: 30px;'>Atentamente,<br/> El Equipo de Autoprocure</p>
+            </div>
+        </body>
+    </html>";
 
                 mail.From = new MailAddress("autoprocurevzla@gmail.com");
-                mail.To.Add(destino.Trim());
+                mail.To.Add(dt.Destino.Trim());
 
                 sender.Port = 587;
                 sender.UseDefaultCredentials = false;
@@ -355,6 +493,8 @@ namespace Autolavado
             {
                 Console.WriteLine("Error al enviar el correo: " + ex.Message);
             }
+
+            return totalMonto;  // Retorna el totalMonto como un int
         }
 
 

@@ -18,6 +18,7 @@ namespace Autolavado
 {
     public partial class Cliente : Form
     {
+
         public Cliente()
         {
             InitializeComponent();
@@ -73,8 +74,6 @@ namespace Autolavado
                     string cellmail = worksheet.Cells[row, 3].Text;
                     string inputmail = textBox5.Text;
 
-                    MessageBox.Show($"Comparando CI: '{cellci}' con '{inputci}'");
-                    MessageBox.Show($"Comparando Correo: '{cellmail}' con '{inputmail}'");
 
                     if (cellci == inputci)
                     {

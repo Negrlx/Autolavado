@@ -15,13 +15,13 @@ namespace Autolavado
     public partial class Consulta : Form
     {
 
-        public Cola climpieza = new Cola(10);
-        public Cola caceite = new Cola(5);
-        public Cola cbalanceo = new Cola(5);
+        public Cola climpieza = new Cola();
+        public Cola caceite = new Cola();
+        public Cola cbalanceo = new Cola();
 
-        public Cola cgeneral = new Cola(20);
+        public Cola cgeneral = new Cola();
 
-        public Pila cauchos = new Pila();
+        public Pila<int> cauchos = new Pila<int>();
 
         public ElementoCola carro;
 
@@ -220,7 +220,7 @@ namespace Autolavado
 
 
 
-                    if (membresia == textBox10.Text)
+                    if (placa == textBox10.Text)
                     {                        
                         MessageBox.Show($"Vehiculo del Cliente: {vehiculo}.\nModelo del Vehiculo: {modelo}.\nPlaca del Vehiculo: {placa}.\nServicio para el Vehiculo: {servicio}.\nMembresia del Cliente: {membresia}.\nEstado del Vehiculo: {estado}.");
 
@@ -237,14 +237,14 @@ namespace Autolavado
 
                     for (int row = 2; row <= lastRowSheet1; row++) // Empezamos desde la fila 2 (omitiendo encabezado)
                     {
-                        string vehiculo = sheet0.Cells[row, 1].Text;
-                        string modelo = sheet0.Cells[row, 2].Text;
-                        string placa = sheet0.Cells[row, 3].Text;
-                        string servicio = sheet0.Cells[row, 4].Text;
-                        string membresia = sheet0.Cells[row, 6].Text;
+                        string vehiculo = sheet1.Cells[row, 1].Text;
+                        string modelo = sheet1.Cells[row, 2].Text;
+                        string placa = sheet1.Cells[row, 3].Text;
+                        string servicio = sheet1.Cells[row, 4].Text;
+                        string membresia = sheet1.Cells[row, 5].Text;
                         string estado = "Ya procesado";
 
-                        if (membresia.Equals(textBox10.Text, StringComparison.OrdinalIgnoreCase))
+                        if (placa == textBox10.Text)
                         {
                             MessageBox.Show($"Vehiculo del Cliente: {vehiculo}.\nModelo del Vehiculo: {modelo}.\nPlaca del Vehiculo: {placa}.\nServicio para el Vehiculo: {servicio}.\nMembresia del Cliente: {membresia}.\nEstado del Vehiculo: {estado}.");
                             

@@ -404,9 +404,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(308, 450);
-            this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel3);
             this.Controls.Add(this.panel13);
+            this.Controls.Add(this.panel1);
             this.Name = "Cita";
             this.Text = "Cita";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Cita_FormClosing);

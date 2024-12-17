@@ -55,10 +55,11 @@ namespace Autolavado
             sexo.Show();
         }
 
-        public Cola listos = new Cola(10);
+        public Cola listos = new Cola();
 
         private void button5_Click(object sender, EventArgs e)
         {
+
 
             string filePath = @"C:\Users\Santiago\Desktop\AutoLavado.xlsx";
 
@@ -120,20 +121,26 @@ namespace Autolavado
                     }
                 }
 
-                if (!cb || !caas || !cca)
-                {
-                    MessageBox.Show("No hay Vehiculos por Procesar");
-                }
-                else
+                if (cb || caas || cca)
                 {
                     MessageBox.Show("Vehiculos Procesados Exitosamente");
                 }
+                else
+                {
+                    MessageBox.Show("No hay Vehiculos por Procesar");
+                }
+
 
                 // Guardar los cambios realizados en el archivo Excel
                 package.Save();
             }
 
 
+
+        }
+
+        private void Inicio_Load(object sender, EventArgs e)
+        {
 
         }
     }

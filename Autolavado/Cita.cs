@@ -72,19 +72,19 @@ namespace Autolavado
 
         //Creacion de Colas - Pila - Arreglo
 
-        public Cola climpieza = new Cola(10);
-        public Cola caceite = new Cola(5);
-        public Cola cbalanceo = new Cola(5);
+        public Cola climpieza = new Cola();
+        public Cola caceite = new Cola();
+        public Cola cbalanceo = new Cola();
 
-        public Cola climpiezaAux = new Cola(10);
-        public Cola caceiteAux = new Cola(5);
-        public Cola cbalanceoAux = new Cola(5);
+        public Cola climpiezaAux = new Cola();
+        public Cola caceiteAux = new Cola();
+        public Cola cbalanceoAux = new Cola();
 
-        public Cola cgeneral = new Cola(20);
-        public Cola cgeneralEx = new Cola(20);
+        public Cola cgeneral = new Cola();
+        public Cola cgeneralEx = new Cola();
 
 
-        public Pila cauchos = new Pila();
+        public Pila<string> cauchos = new Pila<string>();
 
         public ElementoCola carro;
 
@@ -122,7 +122,7 @@ namespace Autolavado
                     {
                         // Si el servicio es Balanceo, también se asigna la pila de cauchos
                         int cant = 4; // Moto o Carro
-                        Pila cauchos = new Pila();
+                        Pila<int> cauchos = new Pila<int>();
                         for (int i = 0; i < cant; i++)
                         {
                             cauchos.Push(i);
@@ -154,127 +154,129 @@ namespace Autolavado
 
             if (!(radioButton4.Checked ^ radioButton5.Checked))
             {
-                MessageBox.Show("Debe seleccionar un tipo de Vehiculo");
+                MessageBox.Show("Debe seleccionar un tipo de Vehículo");
                 return;
             }
 
-            bool codeExists = false;
+            string placaIngresada = textBox4.Text;
+            string membresiaIngresada = textBox5.Text;
+
+            bool membresiaEncontrada = false;
+            bool placaRepetida = false;
 
             using (ExcelPackage package = new ExcelPackage(new FileInfo(excelFilePath)))
             {
                 ExcelWorksheet sheet0 = package.Workbook.Worksheets[0]; // Hoja 0
-                string inputCode = textBox5.Text;
+                ExcelWorksheet sheet1 = package.Workbook.Worksheets[1]; // Hoja 1 (si corresponde)
 
-                for (int row = 2; row <= 100; row++) // Lee hasta la fila 100
+                // Recorremos todas las filas de la hoja 0
+                for (int row = 2; row <= sheet0.Dimension.End.Row; row++) // Comenzamos desde la fila 2 (asumiendo encabezados)
                 {
-                    string cellCode = sheet0.Cells[row, 4].Text; // Columna 4 de la hoja 0
+                    string placaExistente = sheet1.Cells[row, 3].Text.Trim();    // Columna 3: Placa
+                    string membresiaExistente = sheet0.Cells[row, 4].Text.Trim(); // Columna 6: Membresía
 
-                    if (cellCode == inputCode)
+                    if (membresiaExistente == membresiaIngresada)
                     {
-                        codeExists = true;
-                        break; // Salimos del bucle si se encuentra el código
-                    }
-                }
+                        membresiaEncontrada = true;
 
-                if (!codeExists)
-                {
-                    MessageBox.Show("La Membresia ingresada no se encuentra en la base de datos. Registrate");
-                    return;
-                }
-                else
-                {
-                    //Servicio
-
-                    string servicio = "";
-                    if (radioButton1.Checked)
-                        servicio = "Aseo-Aspirado-Secado";
-                    else if (radioButton2.Checked)
-                        servicio = "Cambio-Aceite";
-                    else if (radioButton3.Checked)
-                        servicio = "Balanceo";
-
-                    //Vehiculo = Cantidad de Ruedas
-
-                    string vehiculo = "";
-                    if (radioButton4.Checked)
-                        vehiculo = "Carro";
-                    else if (radioButton5.Checked)
-                        vehiculo = "Camioneta";
-
-                    carro = new ElementoCola(vehiculo, textBox3.Text, textBox4.Text, textBox5.Text, servicio);
-
-                    if (servicio == "Aseo-Aspirado-Secado")
-                    {
-                        climpieza.Insertar(carro);
-                        climpiezaAux.Insertar(carro);
-                        MessageBox.Show("Elemento agregado a la cola de limpieza.");
-                        MessageBox.Show($"Cantidad de la Cola Limpieza: {climpieza.Cantidad()}");
-
-                    }
-                    else if (servicio == "Cambio-Aceite")
-                    {
-                        caceite.Insertar(carro);
-                        caceiteAux.Insertar(carro);
-                        MessageBox.Show("Elemento agregado a la cola de aceite.");
-                        MessageBox.Show($"Cantidad de la Cola Aceite: {caceite.Cantidad()}");
-
-                    }
-                    else if (servicio == "Balanceo")
-                    {
-                        int cant = 4; //Moto o Carro
-                        for (int i = 0; i < cant; i++)
+                        if (placaExistente == placaIngresada)
                         {
-                            cauchos.Push(i);
+                            placaRepetida = true;
+                            break; // No necesitamos seguir buscando
                         }
-
-                        carro.AsignarPila(cauchos);
-
-                        cbalanceo.Insertar(carro);
-                        cbalanceoAux.Insertar(carro);
-                        MessageBox.Show("Elemento agregado a la cola de balanceo.");
-                        MessageBox.Show($"Cantidad de la Cola Balanceo: {cbalanceo.Cantidad()}");
-
                     }
                 }
+
+                
             }
 
+            if (!membresiaEncontrada)
+            {
+                MessageBox.Show("La membresía ingresada no se encuentra en la base de datos. Regístrese.");
+                return;
+            }
 
+            if (placaRepetida)
+            {
+                MessageBox.Show("La placa ingresada ya está asociada a esta membresía. Use una placa diferente.");
+                return;
+            }
+
+            // Continuar con la lógica de inserción...
+            string servicio = radioButton1.Checked ? "Aseo-Aspirado-Secado" :
+                              radioButton2.Checked ? "Cambio-Aceite" :
+                              "Balanceo";
+
+            string vehiculo = radioButton4.Checked ? "Carro" : "Camioneta";
+
+            carro = new ElementoCola(vehiculo, textBox3.Text, placaIngresada, membresiaIngresada, servicio);
+
+            if (servicio == "Aseo-Aspirado-Secado")
+            {
+                climpieza.Insertar(carro);
+                climpiezaAux.Insertar(carro);
+                MessageBox.Show("Elemento agregado a la cola de limpieza.");
+                MessageBox.Show($"Cantidad de la Cola Limpieza: {climpieza.Cantidad()}");
+            }
+            else if (servicio == "Cambio-Aceite")
+            {
+                caceite.Insertar(carro);
+                caceiteAux.Insertar(carro);
+                MessageBox.Show("Elemento agregado a la cola de aceite.");
+                MessageBox.Show($"Cantidad de la Cola Aceite: {caceite.Cantidad()}");
+            }
+            else if (servicio == "Balanceo")
+            {
+                int cant = 4; // Moto o Carro
+                Pila<int> cauchos = new Pila<int>();
+                for (int i = 0; i < cant; i++)
+                {
+                    cauchos.Push(i);
+                }
+
+                carro.AsignarPila(cauchos);
+
+                cbalanceo.Insertar(carro);
+                cbalanceoAux.Insertar(carro);
+                MessageBox.Show("Elemento agregado a la cola de balanceo.");
+                MessageBox.Show($"Cantidad de la Cola Balanceo: {cbalanceo.Cantidad()}");
+            }
         }
         private void button6_Click(object sender, EventArgs e) //Eliminar Elemento de las Colas
         {
             string membresia = textBox10.Text;
-            int n;
             bool encontrado = false;
 
-            if (climpieza.BuscarPosicion(membresia) != -1)
+            // Intentar eliminar de la cola de limpieza
+            if (climpieza.BuscarPosicionMembresia(membresia) != -1)
             {
-                climpieza.Eliminar(climpieza.BuscarPosicion(membresia));
-                climpiezaAux.Eliminar(climpiezaAux.BuscarPosicion(membresia));
+                climpieza.EliminarElementoPorMembresia(membresia);
                 encontrado = true;
             }
-            else if (caceite.BuscarPosicion(membresia) != -1)
+            // Intentar eliminar de la cola de aceite
+            else if (caceite.BuscarPosicionMembresia(membresia) != -1)
             {
-                caceite.Eliminar(caceite.BuscarPosicion(membresia));
-                caceiteAux.Eliminar(caceiteAux.BuscarPosicion(membresia));
+                caceite.EliminarElementoPorMembresia(membresia);
                 encontrado = true;
             }
-            else if (cbalanceo.BuscarPosicion(membresia) != -1)
+            // Intentar eliminar de la cola de balanceo
+            else if (cbalanceo.BuscarPosicionMembresia(membresia) != -1)
             {
-                cbalanceo.Eliminar(cbalanceo.BuscarPosicion(membresia));
-                cbalanceoAux.Eliminar(cbalanceoAux.BuscarPosicion(membresia));
+                cbalanceo.EliminarElementoPorMembresia(membresia);
                 encontrado = true;
             }
 
-            if (!encontrado) { MessageBox.Show("No se elimino la cita a nombre de esa membresia "); }
-            else if (encontrado) { MessageBox.Show("Se encontro la cita a nombre de esa membresia ");  MessageBox.Show("Cita Eliminada "); }
-
+            // Mostrar el resultado
+            if (!encontrado)
+            {
+                MessageBox.Show("No se eliminó la cita a nombre de esa membresía.");
+            }
+            else
+            {
+                MessageBox.Show("Se encontró la cita a nombre de esa membresía.");
+                MessageBox.Show("Cita eliminada.");
+            }
         }
-
-        private void fr(object sender, EventArgs e) //Eliminar Elemento de las Colas
-        {
-            
-        }
-
 
         private void button2_Click(object sender, EventArgs e) //Plantilla Agregar
         {   
@@ -294,13 +296,14 @@ namespace Autolavado
         {
             bool tbr = false;
             int cant = 0;
+
             // Bucle que continúa mientras al menos una cola auxiliar tenga elementos
-            while (!climpiezaAux.Vacia() || !caceiteAux.Vacia() || !cbalanceoAux.Vacia())
+            while (!climpiezaAux.EsVacia() || !caceiteAux.EsVacia() || !cbalanceoAux.EsVacia())
             {
                 ElementoCola elemento;
 
                 // Retirar elementos de cada cola auxiliar y agregarlos a las colas generales
-                if (!climpiezaAux.Vacia())
+                if (!climpiezaAux.EsVacia())
                 {
                     elemento = climpiezaAux.Retirar();
                     cgeneralEx.Insertar(elemento);
@@ -308,7 +311,7 @@ namespace Autolavado
                     cant++;
                 }
 
-                if (!caceiteAux.Vacia())
+                if (!caceiteAux.EsVacia())
                 {
                     elemento = caceiteAux.Retirar();
                     cgeneralEx.Insertar(elemento);
@@ -316,7 +319,7 @@ namespace Autolavado
                     cant++;
                 }
 
-                if (!cbalanceoAux.Vacia())
+                if (!cbalanceoAux.EsVacia())
                 {
                     elemento = cbalanceoAux.Retirar();
                     cgeneralEx.Insertar(elemento);
@@ -326,17 +329,19 @@ namespace Autolavado
 
                 tbr = true;
             }
+
+            // Mostrar mensaje después de mezclar
             if (tbr)
-            { 
+            {
                 MessageBox.Show("Se agregaron todas las colas particulares para generalizar");
                 MessageBox.Show($"Se agregaron: {cant} elementos a la Cola");
-
             }
-
-            else if (!tbr)
-                MessageBox.Show("No agregaron colas particulares para generalizar");
-
+            else
+            {
+                MessageBox.Show("No se agregaron colas particulares para generalizar");
+            }
         }
+
         private void EliminarTodasLasFilas()
         {
             using (ExcelPackage package = new ExcelPackage(new FileInfo(excelFilePath)))
@@ -357,7 +362,7 @@ namespace Autolavado
         private void CargarColaAExcel() //Subir la cola GeneralEx al Excel
         {
             EliminarTodasLasFilas();    
-            if (!cgeneralEx.Vacia())
+            if (!cgeneralEx.EsVacia())
             {
                 using (ExcelPackage package = new ExcelPackage(new FileInfo(excelFilePath)))
                 {
@@ -378,12 +383,12 @@ namespace Autolavado
 
 
                         // Verificamos si tiene pila asociada y agregamos la cantidad
-                        int pilaCantidad = elemento.PilaOpcional != null ? elemento.PilaOpcional.Cantidad() : 0;
+                        int pilaCantidad = elemento.PilaOpcional != null ? elemento.PilaOpcional.Count() : 0;
                         sheet1.Cells[newRow, 5].Value = pilaCantidad;      // Cantidad de la pila
 
                         newRow++; // Incrementar la fila para el siguiente elemento
 
-                    } while (!cgeneralEx.Vacia());
+                    } while (!cgeneralEx.EsVacia());
                     // Guardar los cambios
                     package.Save();
                 }
